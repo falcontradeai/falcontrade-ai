@@ -1,0 +1,54 @@
+{
+  "generated_at": "2025-08-10T11:57:40.226368",
+  "base_currency": "USD",
+  "commodities": [
+    {
+      "name": "Wheat",
+      "unit": "$/ton",
+      "price": 240.16,
+      "forecast_t_plus_1": 238.7,
+      "source": "FalconTrade AI (preview)",
+      "note": "Gold is demo-only in preview; other commodities are part of MVP scope."
+    },
+    {
+      "name": "Barley",
+      "unit": "$/ton",
+      "price": 206.88,
+      "forecast_t_plus_1": 205.69,
+      "source": "FalconTrade AI (preview)",
+      "note": "Gold is demo-only in preview; other commodities are part of MVP scope."
+    },
+    {
+      "name": "Sunflower Oil",
+      "unit": "$/ton",
+      "price": 992.79,
+      "forecast_t_plus_1": 993.1,
+      "source": "FalconTrade AI (preview)",
+      "note": "Gold is demo-only in preview; other commodities are part of MVP scope."
+    },
+    {
+      "name": "Sugar",
+      "unit": "$/ton",
+      "price": 558.21,
+      "forecast_t_plus_1": 555.87,
+      "source": "FalconTrade AI (preview)",
+      "note": "Gold is demo-only in preview; other commodities are part of MVP scope."
+    },
+    {
+      "name": "Steel",
+      "unit": "$/ton",
+      "price": 582.72,
+      "forecast_t_plus_1": 583.1,
+      "source": "FalconTrade AI (preview)",
+      "note": "Gold is demo-only in preview; other commodities are part of MVP scope."
+    },
+    {
+      "name": "Gold",
+      "unit": "$/oz",
+      "price": 2520.0,
+      "forecast_t_plus_1": 2536.96,
+      "source": "FalconTrade AI (preview)",
+      "note": "Gold is demo-only in preview; other commodities are part of MVP scope."
+    }
+  ]
+}
