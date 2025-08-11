@@ -1,29 +1,44 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from apscheduler.schedulers.background import BackgroundScheduler
 from pathlib import Path
-import json, os
+import json
+import os
 
-app = FastAPI(title="FalconTrade AI — MVP Backend", version="0.1.0")
+# Create the FastAPI application
+app = FastAPI(title="FalconTrade AI — MVP Backend with CORS", version="0.1.0")
 
+# Configure CORS middleware to allow the frontend to access the API from any domain.
+# You can replace "*" with a list of allowed origins such as ["https://falcontrade-frontend.vercel.app"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change this to specify allowed origins for better security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Path to the preview data file. Adjust this path according to your project structure.
 DATA_PATH = Path(__file__).resolve().parent.parent.parent / "preview" / "falcontrade_preview_api.json"
 
 class Health(BaseModel):
     status: str
 
 def load_preview():
+    """Load preview data from the JSON file."""
     if DATA_PATH.exists():
         with open(DATA_PATH, "r") as f:
             return json.load(f)
     return {"error": "preview file not found"}
 
 def background_job():
-    # Placeholder: where we will refresh prices/scrape every 15 minutes
-    # In MVP preview mode we do nothing
+    """Placeholder background job for periodic tasks (e.g. refreshing data)."""
+    # In the preview version, we do nothing. In the future, implement scraping or data refresh here.
     pass
 
-# Start scheduler (disabled on import by some servers; keep simple for dev)
+# Setup a scheduler to run background jobs. You can disable this if not needed.
 scheduler = BackgroundScheduler()
 scheduler.add_job(background_job, "interval", minutes=15, id="refresh_job", replace_existing=True)
 try:
@@ -32,14 +47,15 @@ except Exception:
     pass
 
 @app.get("/health", response_model=Health)
-def health():
+def health() -> Health:
+    """Health check endpoint."""
     return Health(status="ok")
 
 @app.get("/prices")
 def prices():
+    """Return the latest prices from the preview data."""
     data = load_preview()
     if "commodities" in data:
-        # Return only current prices (compact format)
         return JSONResponse(content={
             "generated_at": data.get("generated_at"),
             "base_currency": data.get("base_currency"),
@@ -52,13 +68,14 @@ def prices():
 
 @app.get("/forecast")
 def forecast():
+    """Return the next-day forecasts from the preview data."""
     data = load_preview()
     if "commodities" in data:
         return JSONResponse(content={
             "generated_at": data.get("generated_at"),
             "base_currency": data.get("base_currency"),
             "forecasts": [
-                {"name": c["name"], "unit": c["unit"], "t_plus_1": c["forecast_t_plus_1"]}
+                {"name": c["name"], "unit": c["unit"], "t_plus_1": c.get("forecast_t_plus_1", 0)}
                 for c in data["commodities"]
             ]
         })
