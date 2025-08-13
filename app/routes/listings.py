@@ -2,13 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os, shutil
-from ..db import get_db, Base, engine
+from ..db import get_db
 from ..models import Listing, ListingType, User, Message
 from ..schemas import ListingIn, ListingOut, MessageIn, MessageOut
 from ..auth import get_current_user, admin_required
 
 router = APIRouter()
-Base.metadata.create_all(bind=engine)
 
 def to_out(l: Listing) -> ListingOut:
     return ListingOut(
