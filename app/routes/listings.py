@@ -34,17 +34,35 @@ def create_listing(data: ListingIn, user: User = Depends(get_current_user), db: 
     return to_out(l)
 
 @router.get("/market", response_model=List[ListingOut])
-def market(type: Optional[str] = None, category: Optional[str] = None, q: Optional[str] = None, db: Session = Depends(get_db)):
+def market(
+    type: Optional[str] = None,
+    category: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = 200,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+):
     query = db.query(Listing).filter(Listing.status == "published")
-    if type in ("RFQ","OFFER"):
+    if type in ("RFQ", "OFFER"):
         query = query.filter(Listing.type == ListingType(type))
     if category:
         query = query.filter(Listing.category == category)
     if q:
         like = f"%{q}%"
-        from sqlalchemy import or_
-        query = query.filter(or_(Listing.title.ilike(like)))
-    rows = query.order_by(Listing.created_at.desc()).limit(200).all()
+        from sqlalchemy import or_, cast, String
+        query = query.filter(
+            or_(
+                Listing.title.ilike(like),
+                cast(Listing.details, String).ilike(like),
+                Listing.category.ilike(like),
+            )
+        )
+    rows = (
+        query.order_by(Listing.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
     return [to_out(l) for l in rows]
 
 @router.get("/listings/{lid}", response_model=ListingOut)
