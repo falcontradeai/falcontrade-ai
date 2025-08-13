@@ -1,10 +1,21 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Dict, Any
 from datetime import datetime
+import re
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        pattern = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$")
+        if not pattern.match(value):
+            raise ValueError(
+                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+            )
+        return value
 
 class TokenResponse(BaseModel):
     access_token: str
