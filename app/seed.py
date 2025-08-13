@@ -1,11 +1,10 @@
 import os
 from sqlalchemy.orm import Session
-from .db import SessionLocal, Base, engine
+from .db import SessionLocal
 from .models import User, Listing, ListingType
 from .auth import hash_password
 
 def run():
-    Base.metadata.create_all(bind=engine)
     db: Session = SessionLocal()
     try:
         admin_email = os.getenv("ADMIN_EMAIL", "admin@falcontrade.org")

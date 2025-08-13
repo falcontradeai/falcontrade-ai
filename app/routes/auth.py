@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
-from ..db import get_db, Base, engine
+from ..db import get_db
 from ..models import User
 from ..schemas import RegisterRequest, TokenResponse, MeResponse
 from ..auth import hash_password, authenticate, create_access_token, get_current_user
 from email_validator import validate_email, EmailNotValidError
 
 router = APIRouter()
-Base.metadata.create_all(bind=engine)
 
 @router.post("/auth/register")
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
