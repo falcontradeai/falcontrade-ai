@@ -5,7 +5,7 @@ import os, shutil
 from ..db import get_db
 from ..models import Listing, ListingType, User, Message
 from ..schemas import ListingIn, ListingOut, MessageIn, MessageOut
-from ..auth import get_current_user, admin_required
+from ..auth import admin_required, subscription_required
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ def to_out(l: Listing) -> ListingOut:
     )
 
 @router.post("/listings", response_model=ListingOut)
-def create_listing(data: ListingIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_listing(data: ListingIn, user: User = Depends(subscription_required), db: Session = Depends(get_db)):
     if data.type not in ("RFQ","OFFER"):
         raise HTTPException(status_code=400, detail="type must be RFQ or OFFER")
     l = Listing(
@@ -64,7 +64,7 @@ def publish_listing(lid: int, admin: User = Depends(admin_required), db: Session
     return {"ok": True}
 
 @router.post("/listings/{lid}/messages", response_model=MessageOut)
-def add_message(lid: int, data: MessageIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def add_message(lid: int, data: MessageIn, user: User = Depends(subscription_required), db: Session = Depends(get_db)):
     l = db.query(Listing).get(lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
@@ -73,7 +73,7 @@ def add_message(lid: int, data: MessageIn, user: User = Depends(get_current_user
     return MessageOut(id=m.id, body=m.body, created_at=m.created_at, sender_email=m.sender.email)
 
 @router.get("/listings/{lid}/messages", response_model=List[MessageOut])
-def list_messages(lid: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_messages(lid: int, user: User = Depends(subscription_required), db: Session = Depends(get_db)):
     l = db.query(Listing).get(lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
@@ -81,7 +81,7 @@ def list_messages(lid: int, user: User = Depends(get_current_user), db: Session 
     return [MessageOut(id=m.id, body=m.body, created_at=m.created_at, sender_email=m.sender.email) for m in rows]
 
 @router.post("/listings/{lid}/attachments")
-def upload_attachment(lid: int, file: UploadFile = File(...), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def upload_attachment(lid: int, file: UploadFile = File(...), user: User = Depends(subscription_required), db: Session = Depends(get_db)):
     l = db.query(Listing).get(lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")

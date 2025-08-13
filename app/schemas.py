@@ -13,6 +13,7 @@ class TokenResponse(BaseModel):
 class MeResponse(BaseModel):
     email: EmailStr
     is_admin: bool
+    subscription_status: str
 
 class ListingBase(BaseModel):
     type: str
