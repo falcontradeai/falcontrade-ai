@@ -80,6 +80,7 @@ def list_messages(lid: int, user: User = Depends(get_current_user), db: Session 
     rows = db.query(Message).filter(Message.listing_id == lid).order_by(Message.created_at.asc()).all()
     return [MessageOut(id=m.id, body=m.body, created_at=m.created_at, sender_email=m.sender.email) for m in rows]
 
+ i7qqt7-codex/inspect-file-type-and-size-before-saving
 @router.post(
     "/listings/{lid}/attachments",
     description="Upload an attachment. Allowed types: PDF, JPEG, PNG. Max size: 5MB.",
@@ -95,6 +96,7 @@ def upload_attachment(
     Allowed content types: ``application/pdf``, ``image/jpeg``, ``image/png``.
     Maximum file size: 5 MB.
     """
+
     l = db.get(Listing, lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
