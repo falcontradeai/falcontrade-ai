@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from .db import get_db
-from .models import User
+from .models import User, RevokedToken
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
@@ -38,6 +38,8 @@ def authenticate(db: Session, email: str, password: str):
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
     cred_exc = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+    if db.query(RevokedToken).filter(RevokedToken.token == token).first():
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token revoked")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         email: str = payload.get("sub")

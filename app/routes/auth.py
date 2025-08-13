@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from ..db import get_db
-from ..models import User
+from ..models import User, RevokedToken
 from ..schemas import RegisterRequest, TokenResponse, MeResponse
-from ..auth import hash_password, authenticate, create_access_token, get_current_user
+from ..auth import hash_password, authenticate, create_access_token, get_current_user, oauth2_scheme
 from email_validator import validate_email, EmailNotValidError
+from time import time
+
+login_attempts: dict[str, list[float]] = {}
+ATTEMPT_WINDOW = 60
+MAX_ATTEMPTS = 5
 
 router = APIRouter()
 
@@ -23,12 +28,38 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     return {"ok": True}
 
 @router.post("/auth/login", response_model=TokenResponse)
-def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(
+    request: Request,
+    form: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    ip = request.client.host
+    now = time()
+    attempts = [t for t in login_attempts.get(ip, []) if now - t < ATTEMPT_WINDOW]
+    if len(attempts) >= MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts",
+        )
+    attempts.append(now)
+    login_attempts[ip] = attempts
     user = authenticate(db, form.username, form.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_access_token(user.email)
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/auth/logout")
+def logout(
+    user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    if not db.query(RevokedToken).filter(RevokedToken.token == token).first():
+        db.add(RevokedToken(token=token))
+        db.commit()
+    return {"ok": True}
 
 @router.get("/me", response_model=MeResponse)
 def me(user: User = Depends(get_current_user)):

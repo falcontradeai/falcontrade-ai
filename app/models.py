@@ -51,3 +51,10 @@ class Message(Base):
 
     listing: Mapped["Listing"] = relationship("Listing", back_populates="messages")
     sender: Mapped["User"] = relationship("User", back_populates="messages")
+
+
+class RevokedToken(Base):
+    __tablename__ = "revoked_tokens"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
+    revoked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
