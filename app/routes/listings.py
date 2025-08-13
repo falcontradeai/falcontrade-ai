@@ -80,11 +80,35 @@ def list_messages(lid: int, user: User = Depends(get_current_user), db: Session 
     rows = db.query(Message).filter(Message.listing_id == lid).order_by(Message.created_at.asc()).all()
     return [MessageOut(id=m.id, body=m.body, created_at=m.created_at, sender_email=m.sender.email) for m in rows]
 
-@router.post("/listings/{lid}/attachments")
-def upload_attachment(lid: int, file: UploadFile = File(...), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+@router.post(
+    "/listings/{lid}/attachments",
+    description="Upload an attachment. Allowed types: PDF, JPEG, PNG. Max size: 5MB.",
+)
+def upload_attachment(
+    lid: int,
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Upload a file attachment to a listing.
+
+    Allowed content types: ``application/pdf``, ``image/jpeg``, ``image/png``.
+    Maximum file size: 5 MB.
+    """
     l = db.query(Listing).get(lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
+
+    allowed_types = {"application/pdf", "image/jpeg", "image/png"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    file.file.seek(0, os.SEEK_END)
+    size = file.file.tell()
+    file.file.seek(0)
+    if size > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large")
+
     os.makedirs("uploads", exist_ok=True)
     dest = os.path.join("uploads", f"{lid}_{file.filename}")
     with open(dest, "wb") as f:
