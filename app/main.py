@@ -5,6 +5,7 @@ from .db import Base, engine
 from .routes import auth as auth_routes
 from .routes import misc as misc_routes
 from .routes import listings as listings_routes
+from .routes import subscription as subscription_routes
 
 app = FastAPI(title="FalconTrade API", version="v1.0")
 
@@ -29,3 +30,4 @@ if os.getenv("SEED_SAMPLE", "1") == "1":
 app.include_router(misc_routes.router)
 app.include_router(auth_routes.router)
 app.include_router(listings_routes.router)
+app.include_router(subscription_routes.router)

@@ -16,6 +16,8 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    subscription_status: Mapped[str] = mapped_column(String(20), default="inactive")
 
     listings: Mapped[list["Listing"]] = relationship("Listing", back_populates="owner")
     messages: Mapped[list["Message"]] = relationship("Message", back_populates="sender")
