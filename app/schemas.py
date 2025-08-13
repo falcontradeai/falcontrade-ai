@@ -18,7 +18,7 @@ class ListingBase(BaseModel):
     type: str
     category: str
     title: str
-    details: Dict[str, Any] = {}
+    details: Dict[str, Any] = Field(default_factory=dict)
     quantity: str = ""
     incoterm: str = ""
     country: str = ""
