@@ -49,14 +49,14 @@ def market(type: Optional[str] = None, category: Optional[str] = None, q: Option
 
 @router.get("/listings/{lid}", response_model=ListingOut)
 def get_listing(lid: int, db: Session = Depends(get_db)):
-    l = db.query(Listing).get(lid)
+    l = db.get(Listing, lid)
     if not l or l.status != "published":
         raise HTTPException(status_code=404, detail="Not found")
     return to_out(l)
 
 @router.post("/admin/listings/{lid}/publish")
 def publish_listing(lid: int, admin: User = Depends(admin_required), db: Session = Depends(get_db)):
-    l = db.query(Listing).get(lid)
+    l = db.get(Listing, lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
     l.status = "published"
@@ -65,7 +65,7 @@ def publish_listing(lid: int, admin: User = Depends(admin_required), db: Session
 
 @router.post("/listings/{lid}/messages", response_model=MessageOut)
 def add_message(lid: int, data: MessageIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    l = db.query(Listing).get(lid)
+    l = db.get(Listing, lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
     m = Message(body=data.body, listing_id=lid, sender_id=user.id)
@@ -74,7 +74,7 @@ def add_message(lid: int, data: MessageIn, user: User = Depends(get_current_user
 
 @router.get("/listings/{lid}/messages", response_model=List[MessageOut])
 def list_messages(lid: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    l = db.query(Listing).get(lid)
+    l = db.get(Listing, lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
     rows = db.query(Message).filter(Message.listing_id == lid).order_by(Message.created_at.asc()).all()
@@ -82,7 +82,7 @@ def list_messages(lid: int, user: User = Depends(get_current_user), db: Session 
 
 @router.post("/listings/{lid}/attachments")
 def upload_attachment(lid: int, file: UploadFile = File(...), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    l = db.query(Listing).get(lid)
+    l = db.get(Listing, lid)
     if not l:
         raise HTTPException(status_code=404, detail="Not found")
     os.makedirs("uploads", exist_ok=True)
